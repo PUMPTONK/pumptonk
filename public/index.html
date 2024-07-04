@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TON Backend API Tester</title>
+</head>
+<body>
+    <h1>TON Backend API Tester</h1>
+
+    <h2>Connect Wallet</h2>
+    <form id="connectWalletForm">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+        <label for="user_id">User ID:</label>
+        <input type="text" id="user_id" name="user_id" required><br><br>
+        <button type="submit">Connect Wallet</button>
+    </form>
+    <pre id="walletDetails"></pre>
+
+    <h2>Create Token</h2>
+    <form id="createTokenForm">
+        <label for="tokenUserId">User ID:</label>
+        <input type="text" id="tokenUserId" name="tokenUserId" required><br><br>
+        <label for="name">Token Name:</label>
+        <input type="text" id="name" name="name" required><br><br>
+        <label for="symbol">Token Symbol:</label>
+        <input type="text" id="symbol" name="symbol" required><br><br>
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" required></textarea><br><br>
+        <label for="image">Token Image URL:</label>
+        <input type="text" id="image" name="image"><br><br>
+        <label for="twitter_link">Twitter Link:</label>
+        <input type="text" id="twitter_link" name="twitter_link"><br><br>
+        <button type="submit">Create Token</button>
+    </form>
+    <pre id="createdToken"></pre>
+
+    <h2>Like Token</h2>
+    <form id="likeTokenForm">
+        <label for="likeUserId">User ID:</label>
+        <input type="text" id="likeUserId" name="likeUserId" required><br><br>
+        <label for="token_id">Token ID:</label>
+        <input type="text" id="token_id" name="token_id" required><br><br>
+        <button type="submit">Like Token</button>
+    </form>
+    <pre id="likedToken"></pre>
+
+    <script src="app.js"></script>
+</body>
+</html>
