@@ -1,2 +1,2 @@
 # pumpton
-TON Blockchain Project
+Decentralized App - TON Blockchain Project
