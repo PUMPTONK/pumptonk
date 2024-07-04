@@ -1,0 +1,8 @@
+{
+  "name": "PUMP TONK",
+  "description": "Description of your Dapp",
+  "url": "http://localhost:9000",
+  "icons": [
+      "http://localhost:9000/icon.png"
+  ]
+}
