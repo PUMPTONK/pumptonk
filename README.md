@@ -1,6 +1,6 @@
-#This api updates and retrieve user details based on their wallet address
+This api updates and retrieve user details based on their wallet address
 
-#ENPOINTS:
+ENPOINTS:
 UPDATE USER DETAILS(POST):
 http://localhost:3000/api/users/update?Content-Type=multipart/form-data
 {
