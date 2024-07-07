@@ -1,0 +1,14 @@
+{
+  "manifest_version": 1,
+  "id": "1",
+  "name": "YCIYC",
+  "description": "A description of your Dapp",
+  "url": "http://localhost:2000",
+  "icons": [
+    {
+      "src": "http://localhost:2000/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
