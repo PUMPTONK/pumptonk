@@ -3,6 +3,7 @@ This api updates and retrieve user details based on their wallet address
 ENPOINTS:
 UPDATE USER DETAILS(POST):
 http://localhost:3000/api/users/update?Content-Type=multipart/form-data
+
 {
 
      "walletAddress": "0x42e2c70e1F8f13A1cE2339D933fa76155346af28",
