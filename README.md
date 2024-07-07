@@ -15,4 +15,15 @@ http://localhost:3000/api/users/update?Content-Type=multipart/form-data
 FETCH USER DETAILS(GET):
 http://localhost:3000/api/users/10x42e2c70e1F8f13A1cE2339D933fa76155346af28
 
-pass wallet address to api url as shown in endpoint url
+pass wallet address to api url as shown in endpoint url.
+USER DETAILS RESPONSE:
+
+{
+    "id": 2,
+    "walletAddress": "10x42e2c70e1F8f13A1cE2339D933fa76155346af28",
+    "name": "NICHOLAS TESLA",
+    "description": "uploads/profile_pictures/profilePicture-1625678493021.png",
+    "profilePicture": null,
+    "created_at": "2024-07-08T07:29:17.000Z",
+    "updated_at": "2024-07-08T07:29:55.000Z"
+}
