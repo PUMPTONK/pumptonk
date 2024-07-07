@@ -11,7 +11,7 @@ const tonService = {
       const response = await axios.get(`${process.env.TON_API_URL}/getAddressBalance`, {
         params: {
           address: walletAddress,
-          api_key: process.env.TON_API_KEY,
+          //api_key: process.env.TON_API_KEY, //Comment out to use TON SDK directly
         },
       });
       return response.data;
