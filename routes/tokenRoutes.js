@@ -9,26 +9,42 @@ const {
   searchTokens
 } = require('../controllers/tokenController');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
 
-// Route to create a new token
-router.post('/tokens', createToken);
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
 
-// Route to like a token
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('File type not supported'));
+    }
+  }
+});
+
+// Route to create a new token with image upload
+router.post('/tokens', upload.single('tokenImage'), createToken);
+
+// Other routes
 router.post('/tokens/:id/like', likeToken);
-
-// Route to buy a token
 router.post('/tokens/:id/buy', buyToken);
-
-// Route to sell a token
 router.post('/tokens/:id/sell', sellToken);
-
-// Route to supply a token
 router.post('/tokens/:id/supply', supplyToken);
-
-// Route to get a token by id
 router.get('/tokens/:id', getToken);
-
-// Route to search tokens
 router.get('/tokens', searchTokens);
 
 module.exports = router;
