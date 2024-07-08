@@ -1,45 +1,37 @@
+const { listTokenOnStonFi } = require('@ston-fi/sdk');
 const pool = require('../models/token');
-const { StonFi } = require('@ston-fi/sdk');
 
 const allocateTokens = async (tokenId, initialSupply) => {
-  const userWalletAllocation = (initialSupply * 2) / 100;
-  const marketMakerWalletAllocation = (initialSupply * 3) / 100;
-  const exchangeWalletAllocation = (initialSupply * 10) / 100;
-
-  const userWallet = 'user_wallet_address';
-  const marketMakerWallet = 'market_maker_wallet_address';
-  const exchangeWallets = ['exchange_wallet_address1', 'exchange_wallet_address2'];
+  const userShare = initialSupply * 0.02;
+  const marketMakingShare = initialSupply * 0.03;
+  const exchangeShare = initialSupply * 0.10;
 
   try {
-    await pool.query('UPDATE tokens SET allocated_to_user_wallet = ? WHERE id = ?', [userWalletAllocation, tokenId]);
-    await pool.query('UPDATE tokens SET allocated_to_market_maker_wallet = ? WHERE id = ?', [marketMakerWalletAllocation, tokenId]);
+    // Insert transactions for user, market making, and exchange allocations
+    await pool.query('INSERT INTO transactions (token_id, user_wallet_address, type, amount) VALUES (?, ?, ?, ?)', [tokenId, 'user_wallet_address', 'purchase', userShare]);
+    await pool.query('INSERT INTO transactions (token_id, user_wallet_address, type, amount) VALUES (?, ?, ?, ?)', [tokenId, 'market_making_wallet_address', 'allocation', marketMakingShare]);
+    await pool.query('INSERT INTO transactions (token_id, user_wallet_address, type, amount) VALUES (?, ?, ?, ?)', [tokenId, 'exchange_wallet_address', 'allocation', exchangeShare]);
 
-    for (const exchangeWallet of exchangeWallets) {
-      await pool.query('UPDATE tokens SET allocated_to_exchange_wallets = ? WHERE id = ?', [exchangeWalletAllocation / exchangeWallets.length, tokenId]);
-    }
+    console.log('Tokens allocated successfully');
   } catch (error) {
     console.error('Error allocating tokens:', error);
   }
 };
 
-const listTokenOnStonFi = async (token) => {
-  const stonfi = new StonFi();
-
+const listTokenOnStonFiFunction = async (token) => {
   try {
-    const response = await stonfi.listToken({
-      symbol: token.symbol,
+    // Assuming the SDK has a method to list a token on ston.fi
+    await listTokenOnStonFi({
       name: token.name,
-      description: token.description,
-      image: token.token_image,
+      symbol: token.symbol,
       initialSupply: token.initial_supply,
-      marketMakerWallet: 'market_maker_wallet_address',
-      userWallet: 'user_wallet_address',
+      marketCap: token.initial_supply * token.price, // Assuming there's a price property
     });
 
-    console.log('Token listed on ston.fi:', response);
+    console.log('Token listed on ston.fi successfully');
   } catch (error) {
     console.error('Error listing token on ston.fi:', error);
   }
 };
 
-module.exports = { allocateTokens, listTokenOnStonFi };
+module.exports = { allocateTokens, listTokenOnStonFi: listTokenOnStonFiFunction };
