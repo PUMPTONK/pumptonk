@@ -10,3 +10,7 @@ logs/
 
 # Build files
 dist/
+
+temp
+
+.DS_Store
