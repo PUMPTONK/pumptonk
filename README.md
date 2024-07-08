@@ -1,6 +1,8 @@
-# PUMP TONK DAPP
-# Decentralized App - TON Blockchain Project
-# Frontend Language: REACT JS
-Install libraries and Packages using npm install, then start project using npm start
+# YCIYC
 
-# Backend Language: NODE JS
+## Project structure
+
+-   `contracts` - source code of all the smart contracts of the project and their dependencies.
+-   `wrappers` - wrapper classes (implementing `Contract` from ton-core) for the contracts, including any [de]serialization primitives and compilation functions.
+-   `tests` - tests for the contracts.
+-   `scripts` - scripts used by the project, mainly the deployment scripts.
