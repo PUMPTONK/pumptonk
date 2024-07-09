@@ -79,3 +79,22 @@ exports.searchCommentsByUser = async (req, res) => {
     res.status(500).json({ message: 'Error searching comments', error });
   }
 };
+
+exports.getTotalCommentsOnToken = async (req, res) => {
+  try {
+    const { tokenId } = req.params;
+    const totalComments = await Comment.count({ where: { tokenId } });
+    res.json({ tokenId, totalComments });
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving total comments on token', error });
+  }
+};
+
+exports.getTotalCommentsOnAllTokens = async (req, res) => {
+  try {
+    const totalComments = await Comment.count();
+    res.json({ totalComments });
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving total comments on all tokens', error });
+  }
+};
