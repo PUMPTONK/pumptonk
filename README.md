@@ -1,6 +1,6 @@
-# PUMP TONK DAPP
-# Decentralized App - TON Blockchain Project
-# Frontend Language: REACT JS
-Install libraries and Packages using npm install, then start project using npm start
+#YCIYC FOLLOW BACKEND API:
 
-# Backend Language: NODE JS
+1. Follow a user
+2. Unfollow a user
+3. Get followers of a user
+4. Get following of a user
