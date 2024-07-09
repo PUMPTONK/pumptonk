@@ -31,6 +31,11 @@ const followModel = {
     const sql = 'SELECT following_id FROM follows WHERE follower_id = ?';
     const [rows] = await db.execute(sql, [user_id]);
     return rows;
+  },
+  getFollowerCount: async (user_id) => {
+    const sql = 'SELECT COUNT(*) AS count FROM follows WHERE following_id = ?';
+    const [rows] = await db.execute(sql, [user_id]);
+    return rows[0].count;
   }
 };
 
