@@ -37,6 +37,15 @@ const followController = {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
+  },
+  getFollowerCount: async (req, res) => {
+    try {
+      const { user_id } = req.params;
+      const count = await followModel.getFollowerCount(user_id);
+      res.status(200).json({ followerCount: count });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 
