@@ -1,6 +1,8 @@
-# PUMP TONK DAPP
-# Decentralized App - TON Blockchain Project
-# Frontend Language: REACT JS
-Install libraries and Packages using npm install, then start project using npm start
+# TOKENS COUNTER
 
-# Backend Language: NODE JS
+- Get New Tokens
+- Get Trending Tokens
+- Get Total Tokens
+- Get Total Tokens by Initial Suppy
+- Get Tokens By User ID
+- Get Total Tokens By User ID
