@@ -6,7 +6,9 @@ const {
   sellToken,
   supplyToken,
   getToken,
-  searchTokens
+  searchTokens,
+  getTokenDetailsById,
+  getTokensByUserId
 } = require('../controllers/tokenController');
 const router = express.Router();
 const multer = require('multer');
@@ -46,5 +48,8 @@ router.post('/tokens/:id/sell', sellToken);
 router.post('/tokens/:id/supply', supplyToken);
 router.get('/tokens/:id', getToken);
 router.get('/tokens', searchTokens);
+
+router.get('/tokens/details/:id', getTokenDetailsById);
+router.get('/tokens/user/:userId', getTokensByUserId);
 
 module.exports = router;
