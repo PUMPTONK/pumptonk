@@ -1,6 +1,7 @@
 const { listTokenOnStonFi } = require('@ston-fi/sdk');
 const pool = require('../models/token');
 
+
 const allocateTokens = async (tokenId, initialSupply) => {
   const userShare = initialSupply * 0.02;
   const marketMakingShare = initialSupply * 0.03;
@@ -33,5 +34,6 @@ const listTokenOnStonFiFunction = async (token) => {
     console.error('Error listing token on ston.fi:', error);
   }
 };
+
 
 module.exports = { allocateTokens, listTokenOnStonFi: listTokenOnStonFiFunction };
