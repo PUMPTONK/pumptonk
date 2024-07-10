@@ -2,6 +2,70 @@ const crypto = require('crypto');
 const pool = require('../models/token');
 const { allocateTokens, listTokenOnStonFi } = require('../services/tokenService');
 const path = require('path');
+const axios = require('axios');
+
+
+// Example environment variables
+const DEPLOYMENT_FEE_TONS = process.env.DEPLOYMENT_FEE_TONS || 2;
+const TON_SMART_CONTRACT_ADDRESS = process.env.TON_SMART_CONTRACT_ADDRESS;
+const TON_V2_API_KEY = process.env.TON_V2_API_KEY;
+
+// Function to deduct deployment fee and remit to designated wallet
+const deductDeploymentFee = async (userWalletAddress) => {
+  try {
+    // Example: Check user's wallet balance using TON V2 API
+    const response = await axios.get(`https://sandbox.tonhubapi.com/getAddressInformation?address=${userWalletAddress}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TON_V2_API_KEY}`,
+      },
+    });
+
+    let userBalance = parseFloat(response.data.result.balance);
+    let deploymentFee = parseFloat(DEPLOYMENT_FEE_TONS);
+
+    console.log('User Balance:', userBalance);
+    console.log('Deployment Fee:', deploymentFee);
+
+    if (isNaN(deploymentFee)) {
+      throw new Error('Invalid balance or deployment fee');
+    }
+
+    if (userBalance < deploymentFee) {
+      throw new Error('Insufficient balance');
+    }
+
+    // Deduct deployment fee from user's wallet
+    const newBalance = userBalance - deploymentFee;
+    console.log('New Balance:', newBalance);
+
+    // Update user's wallet balance in the database
+    await pool.query('UPDATE users SET balance = ? WHERE walletAddress = ?', [newBalance, userWalletAddress]);
+
+    // Remit deployment fee to designated wallet (TON Smart Contract)
+    // Example: Call TON Smart Contract method using axios or appropriate SDK
+    const remitResponse = await axios.post(`https://sandbox.tonhubapi.com/runGetMethod`, {
+      contractAddress: TON_SMART_CONTRACT_ADDRESS,
+      method: 'runGetMethod',
+      params: {
+        userWalletAddress,
+        amount: deploymentFee,
+      },
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TON_V2_API_KEY}`,
+      },
+    });
+
+    console.log('Deployment fee remitted:', remitResponse.data);
+
+    return true;
+  } catch (error) {
+    console.error('Error deducting deployment fee:', error.message);
+    throw error;
+  }
+};
 
 
 // Create Token with token transaction hash
@@ -20,6 +84,10 @@ const createToken = async (req, res) => {
   const transactionHash = crypto.createHash('sha256').update(`${name}${symbol}${userWalletAddress}${Date.now()}`).digest('hex');
 
   try {
+
+     // Deduct deployment fee from user's wallet
+     await deductDeploymentFee(userWalletAddress);
+
     const [result] = await pool.query(
       'INSERT INTO tokens (name, user_id, symbol, description, token_image, initial_supply, currentSupply, marketCap, twitter_link, telegram_link, website_link, user_wallet_address, transaction_hash) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)',
       [name, user_id, symbol, description, tokenImage, initialSupply, initialSupply, innitialmarketCap, twitterLink, telegramLink, websiteLink, userWalletAddress, transactionHash]
@@ -27,11 +95,13 @@ const createToken = async (req, res) => {
 
     const tokenId = result.insertId;
 
+    // Allocate tokens
     await allocateTokens(tokenId, initialSupply);
 
     const [token] = await pool.query('SELECT * FROM tokens WHERE id = ?', [tokenId]);
     await listTokenOnStonFi(token[0]);
-
+    
+    // Respond with success message
     res.status(201).json({ message: 'Token created successfully', tokenId, transactionHash });
   } catch (error) {
     console.error(error);
