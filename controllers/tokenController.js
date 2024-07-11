@@ -5,6 +5,20 @@ const path = require('path');
 const axios = require('axios');
 
 
+//websocket declaration
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+app.use(express.json());
+
+
+
 // Example environment variables
 const DEPLOYMENT_FEE_TONS = process.env.DEPLOYMENT_FEE_TONS || 2;
 const TON_SMART_CONTRACT_ADDRESS = process.env.TON_SMART_CONTRACT_ADDRESS;
@@ -21,8 +35,8 @@ const deductDeploymentFee = async (userWalletAddress) => {
       },
     });
 
-     //let userBalance = 5;
-    let userBalance = parseFloat(response.data.result.balance);
+    let userBalance = 5;
+    //let userBalance = parseFloat(response.data.result.balance);
     let deploymentFee = parseFloat(DEPLOYMENT_FEE_TONS);
 
     console.log('User Balance:', userBalance);
@@ -103,9 +117,28 @@ const createToken = async (req, res) => {
 
     const [token] = await pool.query('SELECT * FROM tokens WHERE id = ?', [tokenId]);
     await listTokenOnStonFi(token[0]);
+
+    // Retrieve the inserted transaction
+    const [create_token_notification] = await pool.execute(
+      `SELECT * FROM tokens WHERE id = ?`,
+      [result.insertId]
+    );
+
+    // Notify all connected WebSocket clients
+    const notification = {
+      create_token_notification: create_token_notification[0],
+      token: token[0]
+    };
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(notification));
+      }
+    });
+
+    res.status(201).json(notification);
     
     // Respond with success message
-    res.status(201).json({ message: 'Token created successfully', tokenId, transactionHash });
+    //res.status(201).json({ message: 'Token created successfully', tokenId, transactionHash });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -162,9 +195,31 @@ const buyToken = async (req, res) => {
 
     // Update the database
     await pool.query('UPDATE tokens SET currentSupply = ?, marketCap = ?, bondingCurvePrice = ? WHERE id = ?', [newSupply, newMarketCap, price, id]);
-    await pool.query('INSERT INTO transactions (token_id, user_wallet_address, type, amount) VALUES (?, ?, ?, ?)', [id, userWalletAddress, 'buy', amount]);
+    const [result]= await pool.query('INSERT INTO transactions (token_id, user_wallet_address, type, amount) VALUES (?, ?, ?, ?)', [id, userWalletAddress, 'buy', amount]);
 
-    res.status(201).json({ message: 'Token purchased successfully', price });
+    // Generate websocket notification
+    // Retrieve the inserted transaction
+    const [buy_token_notification] = await pool.execute(
+      `SELECT * FROM transactions WHERE id = ?`,
+      [result.insertId]
+    );
+
+    // Notify all connected WebSocket clients
+    const buy_notification = {
+      buy_token_notification: buy_token_notification[0],
+      bought_token_details: token[0]
+    };
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(buy_notification));
+      }
+    });
+
+    //send notification to websocket
+
+    res.status(201).json(buy_notification);
+
+    //res.status(201).json({ message: 'Token purchased successfully', price });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -176,14 +231,45 @@ const sellToken = async (req, res) => {
   const { userWalletAddress, amount } = req.body;
 
   try {
-    await pool.query(
+    const [result] = await pool.query(
       'INSERT INTO transactions (token_id, user_wallet_address, type, amount) VALUES (?, ?, ?, ?)',
       [id, userWalletAddress, 'sell', amount]
     );
-    res.status(201).json({ message: 'Token sold successfully' });
+
+    // Retrieve the inserted transaction
+    const [sold_token_transaction_notification] = await pool.execute(
+      `SELECT * FROM transactions WHERE id = ?`,
+      [result.insertId]
+    );
+
+    // Retrieve the token details to generate websocket notification
+    const [token] = await pool.execute(
+      `SELECT * FROM tokens WHERE id = ?`,
+      [id]
+    );
+
+    // Notify all connected WebSocket clients
+    const sold_tokens_notification = {
+      sold_token_transaction_notification: sold_token_transaction_notification[0],
+      sold_token_details: token[0]
+    };
+    
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(sold_tokens_notification));
+      }
+    });
+
+    //Geneate Notification
+    res.status(201).json(sold_tokens_notification);
+    //res.status(201).json({ message: 'Token sold successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
+    
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
   }
 };
 
@@ -270,5 +356,13 @@ const searchTokens = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+
+// WebSocket connection
+wss.on('connection', (ws) => {
+  console.log('New WebSocket connection');
+  ws.send(JSON.stringify({ message: 'Welcome to the WebSocket server' }));
+});
+
 
 module.exports = { createToken, likeToken, buyToken, sellToken, supplyToken, getToken, searchTokens, getTokenDetailsById, getTokensByUserId  };
