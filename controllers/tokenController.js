@@ -35,8 +35,8 @@ const deductDeploymentFee = async (userWalletAddress) => {
       },
     });
 
-    let userBalance = 5;
-    //let userBalance = parseFloat(response.data.result.balance);
+    //let userBalance = 5;
+    let userBalance = parseFloat(response.data.result.balance);
     let deploymentFee = parseFloat(DEPLOYMENT_FEE_TONS);
 
     console.log('User Balance:', userBalance);
