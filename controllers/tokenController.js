@@ -21,6 +21,7 @@ const deductDeploymentFee = async (userWalletAddress) => {
       },
     });
 
+     //let userBalance = 5;
     let userBalance = parseFloat(response.data.result.balance);
     let deploymentFee = parseFloat(DEPLOYMENT_FEE_TONS);
 
@@ -78,7 +79,9 @@ const createToken = async (req, res) => {
   }
 
   // Generate Innital Market Cap price for new token, replace this according to website trading policy
-  const innitialmarketCap = 1;
+  const market_value_of_a_token = 1; // Assumes 1token = 1 TONS. Change thsi any time
+  const inital_value = market_value_of_a_token * initialSupply;
+  const innitialmarketCap = parseFloat(inital_value);
 
   // Generate transaction hash
   const transactionHash = crypto.createHash('sha256').update(`${name}${symbol}${userWalletAddress}${Date.now()}`).digest('hex');
@@ -89,7 +92,7 @@ const createToken = async (req, res) => {
      await deductDeploymentFee(userWalletAddress);
 
     const [result] = await pool.query(
-      'INSERT INTO tokens (name, user_id, symbol, description, token_image, initial_supply, currentSupply, marketCap, twitter_link, telegram_link, website_link, user_wallet_address, transaction_hash) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)',
+      'INSERT INTO tokens (name, user_id, symbol, description, token_image, initial_supply, currentSupply, marketCap, twitter_link, telegram_link, website_link, user_wallet_address, transaction_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [name, user_id, symbol, description, tokenImage, initialSupply, initialSupply, innitialmarketCap, twitterLink, telegramLink, websiteLink, userWalletAddress, transactionHash]
     );
 
