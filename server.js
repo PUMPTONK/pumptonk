@@ -1,47 +1,49 @@
 // server.js
 const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
 const db = require('./db');
-
 const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const PORT = process.env.PORT || 8080;
 
-wss.on('connection', ws => {
-  console.log('New client connected');
-  
-  ws.on('message', message => {
-    console.log(`Received message => ${message}`);
-    if (message === 'getLatestToken') {
-      getLatestTokenDetails(ws);
-    }
-  });
+// Middleware to parse JSON bodies
+app.use(express.json());
 
-  ws.on('close', () => {
-    console.log('Client disconnected');
-  });
-});
-
-function getLatestTokenDetails(ws) {
+// Endpoint to get the latest token details
+app.get('/latest-token', (req, res) => {
   const query = 'SELECT * FROM tokens ORDER BY created_at DESC LIMIT 1';
   
   db.query(query, (err, results) => {
     if (err) {
       console.error('Error fetching latest token:', err.stack);
-      ws.send(JSON.stringify({ error: 'Error fetching latest token' }));
-      return;
+      return res.status(500).json({ error: 'Error fetching latest token' });
     }
     
     if (results.length > 0) {
-      ws.send(JSON.stringify(results[0]));
+      res.json(results[0]);
     } else {
-      ws.send(JSON.stringify({ error: 'No tokens found' }));
+      res.status(404).json({ error: 'No tokens found' });
     }
   });
-}
+});
 
-const PORT = process.env.PORT || 8080;
-server.listen(PORT, () => {
+// Endpoint to get the sum of currentSupply for a given user_id
+app.get('/current-supply-sum/:userId', (req, res) => {
+  const userId = req.params.userId;
+  const query = 'SELECT SUM(currentSupply) AS totalCurrentSupply FROM tokens WHERE user_id = ?';
+  
+  db.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error('Error fetching current supply sum:', err.stack);
+      return res.status(500).json({ error: 'Error fetching current supply sum' });
+    }
+    
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'No tokens found for the given user ID' });
+    }
+  });
+});
+
+app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
