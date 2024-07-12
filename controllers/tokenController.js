@@ -22,7 +22,9 @@ app.use(express.json());
 // Example environment variables
 const DEPLOYMENT_FEE_TONS = process.env.DEPLOYMENT_FEE_TONS || 2;
 const TON_SMART_CONTRACT_ADDRESS = process.env.TON_SMART_CONTRACT_ADDRESS;
+const TON_API_URL = process.env.TON_API_URL;
 const TON_V2_API_KEY = process.env.TON_V2_API_KEY;
+const VALUE_OF_ONE_TOKEN_IN_TON = process.env.VALUE_OF_ONE_TOKEN_IN_TON;
 
 // Function to deduct deployment fee and remit to designated wallet
 const deductDeploymentFee = async (userWalletAddress) => {
@@ -59,9 +61,9 @@ const deductDeploymentFee = async (userWalletAddress) => {
 
     // Remit deployment fee to designated wallet (TON Smart Contract)
     // Example: Call TON Smart Contract method using axios or appropriate SDK
-    const remitResponse = await axios.post(`https://sandbox.tonhubapi.com/runGetMethod`, {
+    const remitResponse = await axios.post(`https://sandbox.tonhubapi.com/sendQuery`, {
       contractAddress: TON_SMART_CONTRACT_ADDRESS,
-      method: 'runGetMethod',
+      method: 'sendQuery',
       params: {
         userWalletAddress,
         amount: deploymentFee,
@@ -93,8 +95,8 @@ const createToken = async (req, res) => {
   }
 
   // Generate Innital Market Cap price for new token, replace this according to website trading policy
-  const market_value_of_a_token = 1; // Assumes 1token = 1 TONS. Change thsi any time
-  const inital_value = market_value_of_a_token * initialSupply;
+ // Assumes 1token = 1 TONS. Change thsi any time from ENV file
+  const inital_value = VALUE_OF_ONE_TOKEN_IN_TON * initialSupply;
   const innitialmarketCap = parseFloat(inital_value);
 
   // Generate transaction hash
@@ -174,7 +176,9 @@ const likeToken = async (req, res) => {
 // Buy Token
 const buyToken = async (req, res) => {
   const { id } = req.params;
-  const { userWalletAddress, amount } = req.body;
+  const { userWalletAddress, amount, buyerPrivateKey  } = req.body; 
+  // userWalletAddress is the Buyer wallet address that must be submitted through POST METHOD
+  // buyerPrivateKey is relevant to enable the buyer send TONS to the seller
 
   try {
     // Fetch token details
@@ -184,7 +188,45 @@ const buyToken = async (req, res) => {
       return res.status(404).json({ message: 'Token not found' });
     }
 
-    const { initial_supply, currentSupply, marketCap } = token[0];
+    const { user_id, user_wallet_address, initial_supply, currentSupply, marketCap } = token[0];
+
+    // Get seller wallet address, and seller ID
+    const seller_wallet_address = user_wallet_address;
+
+    //convert token amount to TONS
+    const token_amount_into_tons = amount * VALUE_OF_ONE_TOKEN_IN_TON; // This is the amount in TONS that will be deducted and sent to seller wallet
+
+    if (!userWalletAddress || !seller_wallet_address || !buyerPrivateKey) {
+      return res.status(400).send({ error: 'Buyer address, seller address, and buyer private key are required' });
+    }
+
+     // Prepare sending payload of tokens bought in TONS to seller wallet 
+     /**const transaction = {
+      fromAddress: userWalletAddress,    // Buyer wallet address
+      toAddress: seller_wallet_address, // Seller wallet address
+      amount: token_amount_into_tons,  // Amount of tokens converted to TONS
+      privateKey: buyerPrivateKey     // buyer PrivateKey
+  };***/
+
+  const transaction = await axios.post(`https://sandbox.tonhubapi.com/sendQuery`, {
+    contractAddress: TON_SMART_CONTRACT_ADDRESS,
+    method: 'sendQuery',
+    params: {
+      fromAddress: userWalletAddress,    // Buyer wallet address
+      toAddress: seller_wallet_address, // Seller wallet address
+      amount: token_amount_into_tons,  // Amount of tokens converted to TONS
+      privateKey: buyerPrivateKey     // buyer PrivateKey
+    },
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${TON_V2_API_KEY}`,
+    },
+  });
+
+
+ 
+
 
     // Calculate bonding curve price
     const price = calculateBondingCurvePrice(initial_supply, currentSupply);
@@ -215,9 +257,17 @@ const buyToken = async (req, res) => {
       }
     });
 
+    if (transaction.data.ok) {
+      //res.send({ success: true, transaction: response.data.result });
+      // Insert data into database table and generate payload data for get method if transacion was succcessful 
+      res.status(201).json(buy_notification);
+  } else {
+      res.status(500).send({ error: 'Failed to complete the transaction, please check your Private Key and try again', details: transaction.data });
+  }
+
     //send notification to websocket
 
-    res.status(201).json(buy_notification);
+    
 
     //res.status(201).json({ message: 'Token purchased successfully', price });
   } catch (error) {
